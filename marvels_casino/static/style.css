@@ -16,7 +16,9 @@ body {
   border-radius: 5px;
 }
 
-#spin {
+#spin,
+#scratch,
+#wheel {
   margin-top: 20px;
   padding: 10px 20px;
   font-size: 1.2em;

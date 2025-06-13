@@ -1,6 +1,9 @@
 from flask import Flask, jsonify, request, send_from_directory
 from .slot_machine import SlotMachine
 from .token import TokenBank
+from .scratchoff import ScratchOff
+from .prize_wheel import PrizeWheel
+from .vip import VIPManager
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 
@@ -18,6 +21,9 @@ machines = {
 }
 
 bank = TokenBank()
+vip = VIPManager()
+scratcher = ScratchOff()
+wheel = PrizeWheel()
 
 @app.route('/')
 def index():
@@ -36,21 +42,79 @@ def spin(machine):
     if result and result['payout']:
         bank.add_tokens(user, result['payout'])
 
+    bonus = vip.add_points(user, cost)
+    if bonus:
+        bank.add_tokens(user, bonus)
+
     if result is None:
         return jsonify({'error': 'Unknown machine'}), 404
 
     result['balance'] = bank.get_balance(user)
+    result['vip_level'] = vip.get_level(user)
+    result['bonus'] = bonus
     return jsonify(result)
 
 @app.route('/balance/<user>')
 def balance(user):
     return jsonify({'balance': bank.get_balance(user)})
 
+
+@app.route('/scratchoff/<user>', methods=['POST'])
+def scratchoff_game(user):
+    cost = request.json.get('cost', scratcher.cost)
+    if not bank.spend_tokens(user, cost):
+        return jsonify({'error': 'Insufficient tokens'}), 400
+
+    payout = scratcher.play()
+    if payout:
+        bank.add_tokens(user, payout)
+
+    bonus = vip.add_points(user, cost)
+    if bonus:
+        bank.add_tokens(user, bonus)
+
+    return jsonify({
+        'payout': payout,
+        'bonus': bonus,
+        'balance': bank.get_balance(user),
+        'vip_level': vip.get_level(user)
+    })
+
+
+@app.route('/wheel/<user>', methods=['POST'])
+def wheel_game(user):
+    cost = request.json.get('cost', wheel.cost)
+    if not bank.spend_tokens(user, cost):
+        return jsonify({'error': 'Insufficient tokens'}), 400
+
+    payout = wheel.spin()
+    if payout:
+        bank.add_tokens(user, payout)
+
+    bonus = vip.add_points(user, cost)
+    if bonus:
+        bank.add_tokens(user, bonus)
+
+    return jsonify({
+        'payout': payout,
+        'bonus': bonus,
+        'balance': bank.get_balance(user),
+        'vip_level': vip.get_level(user)
+    })
+
 @app.route('/deposit/<user>', methods=['POST'])
 def deposit(user):
     amount = request.json.get('amount', 10)
     bank.add_tokens(user, amount)
     return jsonify({'balance': bank.get_balance(user)})
+
+
+@app.route('/vip/<user>')
+def vip_status(user):
+    return jsonify({
+        'level': vip.get_level(user),
+        'points': vip.get_points(user)
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)

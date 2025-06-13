@@ -6,6 +6,12 @@ async function updateBalance() {
   document.getElementById('balance').textContent = data.balance;
 }
 
+async function updateVIP() {
+  const res = await fetch(`/vip/${user}`);
+  const data = await res.json();
+  document.getElementById('vip').textContent = `Level ${data.level} (${data.points} pts)`;
+}
+
 async function deposit(amount=20) {
   await fetch(`/deposit/${user}`, {
     method: 'POST',
@@ -13,6 +19,7 @@ async function deposit(amount=20) {
     body: JSON.stringify({ amount })
   });
   updateBalance();
+  updateVIP();
 }
 
 document.getElementById('spin').addEventListener('click', async () => {
@@ -37,12 +44,45 @@ document.getElementById('spin').addEventListener('click', async () => {
     if (data.jackpot) {
       msg += ` - ${data.jackpot.toUpperCase()} JACKPOT!`;
     }
+    if (data.bonus) {
+      msg += ` +${data.bonus} bonus tokens`;
+    }
     document.getElementById('result').textContent = msg;
     updateBalance();
+    updateVIP();
   }
 });
 
 // Seed some starting tokens on first load
 window.addEventListener('load', () => {
   deposit(10);
+  updateVIP();
+});
+
+document.getElementById('scratch').addEventListener('click', async () => {
+  const res = await fetch(`/scratchoff/${user}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
+  });
+  const data = await res.json();
+  let msg = data.payout ? `Scratch win ${data.payout}` : 'No luck';
+  if (data.bonus) msg += ` +${data.bonus} bonus`;
+  document.getElementById('result').textContent = msg;
+  updateBalance();
+  updateVIP();
+});
+
+document.getElementById('wheel').addEventListener('click', async () => {
+  const res = await fetch(`/wheel/${user}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({})
+  });
+  const data = await res.json();
+  let msg = `Wheel prize ${data.payout}`;
+  if (data.bonus) msg += ` +${data.bonus} bonus`;
+  document.getElementById('result').textContent = msg;
+  updateBalance();
+  updateVIP();
 });
