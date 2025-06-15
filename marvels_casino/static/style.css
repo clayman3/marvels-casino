@@ -1,0 +1,41 @@
+body {
+  background: black;
+  color: white;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.reel {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  line-height: 50px;
+  margin: 0 5px;
+  font-size: 2em;
+  background: purple;
+  border-radius: 5px;
+}
+
+#spin,
+#scratch,
+#wheel {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  background: crimson;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#result {
+  margin-top: 15px;
+  font-size: 1.2em;
+}
+
+.jackpots {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: gold;
+}
